@@ -2,92 +2,32 @@ import socket
 from threading import Thread
 from tkinter import *
 from tkinter import ttk
+from tkinter import filedialog
 
 
-PORT  = 8080
-IP_ADDRESS = '127.0.0.1'
-SERVER = None
-BUFFER_SIZE = 4096
+IP_ADDRESS='127.0.0.1'
+PORT=8050
+SERVER=None
+Buffer_size=8090
+clients={}
 
 
-name = None
-listbox =  None
-textarea= None
-labelchat = None
-text_message = None
-
-
-
-
-# Boilerplate Code
-def receiveMessage():
-    global SERVER
-    global BUFFER_SIZE
-
-    while True:
-        chunk = SERVER.recv(BUFFER_SIZE)
-        try:
-            if("tiul" in chunk.decode() and "1.0," not in chunk.decode()):
-                letter_list = chunk.decode().split(",")
-                listbox.insert(letter_list[0],letter_list[0]+":"+letter_list[1]+": "+letter_list[3]+" "+letter_list[5])
-                print(letter_list[0],letter_list[0]+":"+letter_list[1]+": "+letter_list[3]+" "+letter_list[5])
-            else:
-                textarea.insert(END,"\n"+chunk.decode('ascii'))
-                textarea.see("end")
-                print(chunk.decode('ascii'))
-        except:
-            pass
-
-# Teacher Activity
-def showClientsList():
-    global listbox
-    listbox.delete(0,"end")
-    SERVER.send("showlist".encode("ascii"))
-
-
-# Prevoius class code
-# Here we ended the last class
-def connectToServer():
-    global SERVER
-    global name
-    global sending_file
-
-    cname = name.get()
-    SERVER.send(cname.encode())
-
-
-def openChatWindow():
-
-    print("\n\t\t\t\tIP MESSENGER")
-
-    #Client GUI starts here
+def musicWindow():
     window=Tk()
+    window.title("Music window")
+    window.geometry("300 x 300")
+    window.configure(bg="green")
 
-    window.title('Messenger')
-    window.geometry("500x350")
 
-    global name
-    global listbox
-    global textarea
-    global labelchat
-    global text_message
-    global filePathLabel
 
-    song = Label(window, text= "Enter song", font = ("Calibri",10))
-    song.place(x=10, y=8)
 
-    name = Entry(window,width =30,font = ("Calibri",10))
-    name.place(x=120,y=8)
-    name.focus()
 
-    connectserver = Button(window,text="Connect to song Server",bd=1, font = ("Calibri",10), command = connectToServer)
-    connectserver.place(x=350,y=6)
 
-    separator = ttk.Separator(window, orient='horizontal')
-    separator.place(x=0, y=35, relwidth=1, height=0.1)
 
-    labelusers = Label(window, text= "Active Users", font = ("Calibri",10))
-    labelusers.place(x=10, y=50)
+    namelabel = Label(window, text= "select your song", font = ("Calibri",10))
+    namelabel.place(x=10, y=8)
+
+    
 
     listbox = Listbox(window,height = 5,width = 67,activestyle = 'dotbox', font = ("Calibri",10))
     listbox.place(x=10, y=70)
@@ -96,57 +36,48 @@ def openChatWindow():
     scrollbar1.place(relheight = 1,relx = 1)
     scrollbar1.config(command = listbox.yview)
 
-    # Student Activity 1
-    connectButton=Button(window,text="Connect",bd=1, font = ("Calibri",10))
-    connectButton.place(x=282,y=160)
+    playtButton=Button(window,text="play",bd=1, font = ("Calibri",10))
+    playtButton.place(x=282,y=160)
 
-    # Bolierplate Code
-    disconnectButton=Button(window,text="Disconnect",bd=1, font = ("Calibri",10))
-    disconnectButton.place(x=350,y=160)
+   
+    stopButton=Button(window,text="stop",bd=1, font = ("Calibri",10))
+    stopButton.place(x=350,y=160)
 
-    # Teacher Activity
-    refresh=Button(window,text="Refresh",bd=1, font = ("Calibri",10),command=showClientsList)
-    refresh.place(x=435,y=160)
+    uploadButton=Button(window,text="Upload",bd=1, font = ("Calibri",10))
+    uploadButton.place(x=282,y=160)
 
-    labelchat = Label(window, text= "Chat Window", font = ("Calibri",10))
-    labelchat.place(x=10, y=180)
-
-    textarea = Text(window, width = 67,height = 6,font = ("Calibri",10))
-    textarea.place(x=10,y=200)
-
-    scrollbar2 = Scrollbar(textarea)
-    scrollbar2.place(relheight = 1,relx = 1)
-    scrollbar2.config(command = listbox.yview)
-
-    attach=Button(window,text="Attach & Send",bd=1, font = ("Calibri",10))
-    attach.place(x=10,y=305)
-
-    text_message = Entry(window, width =43, font = ("Calibri",12))
-    text_message.pack()
-    text_message.place(x=98,y=306)
-
-    send=Button(window,text="Send",bd=1, font = ("Calibri",10))
-    send.place(x=450,y=305)
-
-    filePathLabel = Label(window, text= "",fg= "blue", font = ("Calibri",8))
-    filePathLabel.place(x=10, y=330)
+   
+    downloadButton=Button(window,text="Download",bd=1, font = ("Calibri",10))
+    downloadButton.place(x=350,y=160)
+ 
+ 
 
     window.mainloop()
 
+def acceptConnections(client,addr):
+    global SERVER
+    global clients
+
+    while True:
+        client,addr=SERVER.accept()
+        print(client.addr)
 
 def setup():
-    global SERVER
+    print("\n\n\n\n\n\n\t Messenger \n")
     global PORT
     global IP_ADDRESS
+    global SERVER
 
-    SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    SERVER.connect((IP_ADDRESS, PORT))
+    SERVER=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    SERVER.bind((IP_ADDRESS,PORT))
 
+    SERVER.listen(100)
 
-    # Boilerlate Code
-    receive_thread = Thread(target=receiveMessage)               #receiving multiple messages
-    receive_thread.start()
+    print("watiting for connections")
 
-    openChatWindow()
+    acceptConnections()
+    musicWindow()
+    setup_threads=Thread(target=setup)
+    setup_threads.start()
+    
 
-setup()
